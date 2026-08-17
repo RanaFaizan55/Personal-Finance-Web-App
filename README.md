@@ -45,8 +45,10 @@ A premium personal finance and life-management dashboard built with Flask and SQ
 
 3. Run the app:
    ```bash
-   python3 Prac.py
+   python3 app.py
    ```
+
+   The project also keeps a compatibility entrypoint at `Prac.py` for older hosting setups.
 
 4. Open in browser:
    ```text
