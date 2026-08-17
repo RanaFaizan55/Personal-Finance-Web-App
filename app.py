@@ -14,8 +14,20 @@ from time import sleep
 from flask import Flask, g, has_app_context, redirect, render_template, request, session, url_for
 
 BASE_DIR = Path(__file__).resolve().parent
-DATA_DIR = BASE_DIR / "data"
-DB_PATH = DATA_DIR / "life_hub.db"
+
+
+def resolve_data_paths() -> tuple[Path, Path]:
+    preferred_dir = BASE_DIR / "data"
+    if os.access(BASE_DIR, os.W_OK):
+        preferred_dir.mkdir(exist_ok=True)
+        return preferred_dir, preferred_dir / "life_hub.db"
+
+    fallback_dir = Path("/tmp") / "life_hub_data"
+    fallback_dir.mkdir(parents=True, exist_ok=True)
+    return fallback_dir, fallback_dir / "life_hub.db"
+
+
+DATA_DIR, DB_PATH = resolve_data_paths()
 
 app = Flask(__name__)
 application = app
