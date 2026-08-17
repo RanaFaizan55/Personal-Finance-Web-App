@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Life Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">L</div>
+          <div>
+            <p class="eyebrow">Personal</p>
+            <h1>Life Hub</h1>
+          </div>
+        </div>
+
+        <nav class="nav">
+          <a class="nav-item active" href="#overview">Overview</a>
+          <a class="nav-item" href="#analytics">Analytics</a>
+          <a class="nav-item" href="#expenses">Expenses</a>
+          <a class="nav-item" href="#investments">Investments</a>
+          <a class="nav-item" href="#events">Events</a>
+          <a class="nav-item" href="#notes">Notes</a>
+        </nav>
+
+        <div class="sidebar-card">
+          <p class="mini-label">Signed in</p>
+          <h3>{{ user }}</h3>
+          <p>Track your spending, grow your savings, and protect time for the moments that matter.</p>
+        </div>
+
+        <a class="logout-link" href="{{ url_for('logout') }}">Logout</a>
+      </aside>
+
+      <main class="content" id="overview">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Dashboard</p>
+            <h2>My life overview</h2>
+          </div>
+          <div class="topbar-actions">
+            <div class="date-pill">{{ today }}</div>
+            <button class="soft-button" type="button">Sync data</button>
+          </div>
+        </header>
+
+        <section class="hero-panel panel">
+          <div class="hero-copy">
+            <span class="status-badge">Healthy month</span>
+            <h3>You are staying on track.</h3>
+            <p>Your spending is below budget and your next event is coming up soon.</p>
+          </div>
+          <div class="hero-metrics">
+            <div>
+              <span>Budget left</span>
+              <strong>${{ "%.2f"|format(summary['remaining_budget']) }}</strong>
+            </div>
+            <div>
+              <span>Next event</span>
+              <strong>{% if summary['next_event'] %}{{ summary['next_event']['title'] }}{% else %}None{% endif %}</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="stats-grid">
+          <article class="stat-card highlight">
+            <div class="card-header">
+              <span>Total spending</span>
+              <i class="dot expense"></i>
+            </div>
+            <strong>${{ "%.2f"|format(summary['total_expenses']) }}</strong>
+            <small>Monthly tracked</small>
+          </article>
+          <article class="stat-card">
+            <div class="card-header">
+              <span>Investments</span>
+              <i class="dot investment"></i>
+            </div>
+            <strong>${{ "%.2f"|format(summary['total_investments']) }}</strong>
+            <small>Portfolio value</small>
+          </article>
+          <article class="stat-card">
+            <div class="card-header">
+              <span>Remaining budget</span>
+              <i class="dot budget"></i>
+            </div>
+            <strong>${{ "%.2f"|format(summary['remaining_budget']) }}</strong>
+            <small>of ${{ "%.2f"|format(summary['monthly_budget']) }}</small>
+          </article>
+          <article class="stat-card">
+            <div class="card-header">
+              <span>Upcoming events</span>
+              <i class="dot event"></i>
+            </div>
+            <strong>{{ summary['event_count'] }}</strong>
+            <small>{% if summary['next_event'] %}Next: {{ summary['next_event']['title'] }}{% else %}No events{% endif %}</small>
+          </article>
+        </section>
+
+        <section class="analytics-grid" id="analytics">
+          <div class="panel analytics-card">
+            <div class="panel-header">
+              <h3>Expense trend</h3>
+              <span class="pill neutral">6 months</span>
+            </div>
+            <div class="bar-chart">
+              {% for item in monthly_totals %}
+              <div class="bar-group">
+                <div class="bar-wrap">
+                  <div class="bar" style="height: {{ ((item.total / 500) * 100) if item.total else 8 }}%;"></div>
+                </div>
+                <span>{{ item.label }}</span>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="panel analytics-card budget-card">
+            <div class="panel-header">
+              <h3>Budget progress</h3>
+              <span class="pill neutral">{{ budget_percentage }}%</span>
+            </div>
+            <div class="budget-ring-wrap">
+              <div class="budget-ring" style="--progress: {{ budget_percentage }};">
+                <div class="budget-inner">
+                  <strong>{{ budget_percentage }}%</strong>
+                  <span>used</span>
+                </div>
+              </div>
+            </div>
+            <p class="ring-label">Spent ${{ "%.2f"|format(summary['total_expenses']) }} of ${{ "%.2f"|format(summary['monthly_budget']) }}</p>
+          </div>
+
+          <div class="panel analytics-card">
+            <div class="panel-header">
+              <h3>Category breakdown</h3>
+              <span class="pill positive">Spend mix</span>
+            </div>
+            <div class="category-list">
+              {% for item in category_breakdown %}
+              <div class="category-row">
+                <div class="category-meta">
+                  <span class="legend" style="background: {{ item.color }};"></span>
+                  <span>{{ item.category }}</span>
+                </div>
+                <div class="category-values">
+                  <strong>${{ "%.2f"|format(item.amount) }}</strong>
+                  <small>{{ item.percent }}%</small>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </section>
+
+        <section class="form-grid">
+          <div class="panel form-panel">
+            <div class="panel-header">
+              <h3>Add expense</h3>
+              <span class="pill neutral">Cash flow</span>
+            </div>
+            <form method="post" action="/add-expense">
+              <input type="text" name="title" placeholder="Expense title" required />
+              <input type="text" name="category" placeholder="Category" required />
+              <input type="number" step="0.01" name="amount" placeholder="Amount" required />
+              <input type="date" name="date" value="{{ today }}" required />
+              <button type="submit">Save expense</button>
+            </form>
+          </div>
+
+          <div class="panel form-panel">
+            <div class="panel-header">
+              <h3>Add investment</h3>
+              <span class="pill positive">Growth</span>
+            </div>
+            <form method="post" action="/add-investment">
+              <input type="text" name="name" placeholder="Investment name" required />
+              <input type="text" name="type" placeholder="Type" required />
+              <input type="number" step="0.01" name="amount" placeholder="Amount" required />
+              <input type="number" step="0.01" name="return_rate" placeholder="Return %" required />
+              <input type="date" name="date" value="{{ today }}" required />
+              <button type="submit">Save investment</button>
+            </form>
+          </div>
+
+          <div class="panel form-panel">
+            <div class="panel-header">
+              <h3>Add event</h3>
+              <span class="pill warn">Calendar</span>
+            </div>
+            <form method="post" action="/add-event">
+              <input type="text" name="title" placeholder="Event title" required />
+              <input type="date" name="date" value="{{ today }}" required />
+              <input type="text" name="location" placeholder="Location" />
+              <textarea name="notes" rows="3" placeholder="Notes"></textarea>
+              <button type="submit">Save event</button>
+            </form>
+          </div>
+        </section>
+
+        <section class="calendar-panel panel">
+          <div class="panel-header">
+            <h3>{{ month_name }}</h3>
+            <div class="calendar-nav">
+              <a href="/?month={{ prev_month }}&year={{ prev_year }}">←</a>
+              <a href="/?month={{ next_month }}&year={{ next_year }}">→</a>
+            </div>
+          </div>
+
+          <div class="calendar-grid">
+            <div class="calendar-header-cell">Sun</div>
+            <div class="calendar-header-cell">Mon</div>
+            <div class="calendar-header-cell">Tue</div>
+            <div class="calendar-header-cell">Wed</div>
+            <div class="calendar-header-cell">Thu</div>
+            <div class="calendar-header-cell">Fri</div>
+            <div class="calendar-header-cell">Sat</div>
+
+            {% for week in calendar_weeks %}
+              {% for day in week %}
+                <div class="calendar-day {% if not day.is_current_month %}muted{% endif %} {% if day.is_today %}today{% endif %}">
+                  <div class="day-number">{{ day.day }}</div>
+                  {% if day.events %}
+                    {% for event in day.events[:2] %}
+                    <div class="calendar-tag event-tag">{{ event.title }}</div>
+                    {% endfor %}
+                  {% endif %}
+                  {% if day.expenses %}
+                    {% for expense in day.expenses[:2] %}
+                    <div class="calendar-tag expense-tag">${{ "%.0f"|format(expense.amount) }}</div>
+                    {% endfor %}
+                  {% endif %}
+                </div>
+              {% endfor %}
+            {% endfor %}
+          </div>
+        </section>
+
+        <section class="details-grid">
+          <div class="panel" id="expenses">
+            <div class="panel-header">
+              <h3>Recent expenses</h3>
+              <span class="pill neutral">{{ expenses|length }} entries</span>
+            </div>
+            <ul class="item-list">
+              {% for item in expenses %}
+              <li>
+                <div>
+                  <strong>{{ item.title }}</strong>
+                  <span>{{ item.category }} • {{ item.date }}</span>
+                </div>
+                <div class="item-actions">
+                  <b>${{ "%.2f"|format(item.amount) }}</b>
+                  <form method="post" action="/delete/expenses/{{ item.id }}">
+                    <button class="delete" type="submit">Delete</button>
+                  </form>
+                </div>
+              </li>
+              {% else %}
+              <li class="empty">No expenses added yet.</li>
+              {% endfor %}
+            </ul>
+          </div>
+
+          <div class="panel" id="investments">
+            <div class="panel-header">
+              <h3>Investments</h3>
+              <span class="pill positive">{{ investments|length }} assets</span>
+            </div>
+            <ul class="item-list">
+              {% for item in investments %}
+              <li>
+                <div>
+                  <strong>{{ item.name }}</strong>
+                  <span>{{ item.type }} • {{ item.date }}</span>
+                </div>
+                <div class="item-actions">
+                  <b>${{ "%.2f"|format(item.amount) }}</b>
+                  <span class="gain">{{ item.return_rate }}%</span>
+                  <form method="post" action="/delete/investments/{{ item.id }}">
+                    <button class="delete" type="submit">Delete</button>
+                  </form>
+                </div>
+              </li>
+              {% else %}
+              <li class="empty">No investments added yet.</li>
+              {% endfor %}
+            </ul>
+          </div>
+
+          <div class="panel" id="events">
+            <div class="panel-header">
+              <h3>Upcoming events</h3>
+              <span class="pill warn">{{ events|length }} scheduled</span>
+            </div>
+            <ul class="item-list">
+              {% for item in events %}
+              <li>
+                <div>
+                  <strong>{{ item.title }}</strong>
+                  <span>{{ item.location }} • {{ item.date }}</span>
+                </div>
+                <div class="item-actions event-actions">
+                  <small>{{ item.notes[:35] + ('...' if item.notes|length > 35 else '') }}</small>
+                  <form method="post" action="/delete/events/{{ item.id }}">
+                    <button class="delete" type="submit">Delete</button>
+                  </form>
+                </div>
+              </li>
+              {% else %}
+              <li class="empty">No events scheduled.</li>
+              {% endfor %}
+            </ul>
+          </div>
+
+          <div class="panel" id="notes">
+            <div class="panel-header">
+              <h3>Life notes</h3>
+              <span class="pill neutral">Memory</span>
+            </div>
+            <form method="post" action="/add-note" class="note-form">
+              <textarea name="note_text" rows="3" placeholder="Write a reminder or personal note..."></textarea>
+              <button type="submit">Add note</button>
+            </form>
+            <ul class="note-list">
+              {% for note in notes %}
+              <li>
+                <span>{{ note.text }}</span>
+                <form method="post" action="/delete/notes/{{ note.id }}">
+                  <button class="delete" type="submit">x</button>
+                </form>
+              </li>
+              {% else %}
+              <li class="empty">No notes yet.</li>
+              {% endfor %}
+            </ul>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+  </body>
+</html>

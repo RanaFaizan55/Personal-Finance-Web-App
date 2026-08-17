@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="section-header section-header-split">
+  <div>
+    <p class="eyebrow">Calendar</p>
+    <h2>Events</h2>
+  </div>
+  <div class="date-pill">{{ today }}</div>
+</section>
+
+<section class="single-column-form-layout">
+  <div class="panel form-panel">
+    <div class="panel-header">
+      <h3>Add event</h3>
+      <span class="pill warn">Schedule</span>
+    </div>
+    <form method="post" action="{{ url_for('events_page') }}">
+      <input type="text" name="title" placeholder="Event title" required />
+      <input type="date" name="date" value="{{ today }}" required />
+      <input type="text" name="location" placeholder="Location" />
+      <textarea name="notes" rows="3" placeholder="Notes"></textarea>
+      <button type="submit">Save event</button>
+    </form>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <h3>Upcoming events</h3>
+      <span class="pill warn">{{ events|length }} scheduled</span>
+    </div>
+    <ul class="item-list">
+      {% for item in events %}
+      <li>
+        <div>
+          <strong>{{ item.title }}</strong>
+          <span>{{ item.location }} • {{ item.date }}</span>
+        </div>
+        <div class="item-actions event-actions">
+          <small>{{ item.notes[:35] + ('...' if item.notes|length > 35 else '') }}</small>
+          <form method="post" action="{{ url_for('delete_item', collection='events', item_id=item.id) }}">
+            <button class="delete" type="submit">Delete</button>
+          </form>
+        </div>
+      </li>
+      {% else %}
+      <li class="empty">No events yet.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endblock %}

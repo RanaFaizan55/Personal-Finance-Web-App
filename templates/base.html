@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ page_title }} | Life Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">L</div>
+          <div>
+            <p class="eyebrow">Personal</p>
+            <h1>Life Hub</h1>
+          </div>
+        </div>
+
+        <nav class="nav">
+          <a class="nav-item {% if request.path == '/dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}">Overview</a>
+          <a class="nav-item {% if request.path == '/analytics' %}active{% endif %}" href="{{ url_for('analytics') }}">Analytics</a>
+          <a class="nav-item {% if request.path == '/expenses' %}active{% endif %}" href="{{ url_for('expenses_page') }}">Expenses</a>
+          <a class="nav-item {% if request.path == '/investments' %}active{% endif %}" href="{{ url_for('investments_page') }}">Investments</a>
+          <a class="nav-item {% if request.path == '/events' %}active{% endif %}" href="{{ url_for('events_page') }}">Events</a>
+          <a class="nav-item {% if request.path == '/notes' %}active{% endif %}" href="{{ url_for('notes_page') }}">Notes</a>
+        </nav>
+
+        <div class="sidebar-card">
+          <p class="mini-label">Signed in</p>
+          <h3>{{ user }}</h3>
+          <p>Track your life with clarity, calm, and momentum.</p>
+        </div>
+
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Toggle theme">🌙</button>
+        <a class="logout-link" href="{{ url_for('logout') }}">Logout</a>
+      </aside>
+
+      <main class="content">
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+  </body>
+</html>

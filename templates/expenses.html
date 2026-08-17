@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="section-header section-header-split">
+  <div>
+    <p class="eyebrow">Money</p>
+    <h2>Expenses</h2>
+  </div>
+  <div class="date-pill">{{ today }}</div>
+</section>
+
+<section class="single-column-form-layout">
+  <div class="panel form-panel">
+    <div class="panel-header">
+      <h3>Add expense</h3>
+      <span class="pill neutral">Cash flow</span>
+    </div>
+    <form method="post" action="{{ url_for('expenses_page') }}">
+      <input type="text" name="title" placeholder="Expense title" required />
+      <input type="text" name="category" placeholder="Category" required />
+      <input type="number" step="0.01" name="amount" placeholder="Amount" required />
+      <input type="date" name="date" value="{{ today }}" required />
+      <textarea name="notes" rows="3" placeholder="Notes"></textarea>
+      <button type="submit">Save expense</button>
+    </form>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <h3>Expense history</h3>
+      <span class="pill neutral">{{ expenses|length }} total</span>
+    </div>
+    <ul class="item-list">
+      {% for item in expenses %}
+      <li>
+        <div>
+          <strong>{{ item.title }}</strong>
+          <span>{{ item.category }} • {{ item.date }}</span>
+        </div>
+        <div class="item-actions">
+          <b>{{ currency_symbol }}{{ "%.2f"|format(item.amount) }}</b>
+          <form method="post" action="{{ url_for('delete_item', collection='expenses', item_id=item.id) }}">
+            <button class="delete" type="submit">Delete</button>
+          </form>
+        </div>
+      </li>
+      {% else %}
+      <li class="empty">No expenses yet.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="section-header section-header-split">
+  <div>
+    <p class="eyebrow">Growth</p>
+    <h2>Investments</h2>
+  </div>
+  <div class="date-pill">{{ today }}</div>
+</section>
+
+<section class="single-column-form-layout">
+  <div class="panel form-panel">
+    <div class="panel-header">
+      <h3>Add investment</h3>
+      <span class="pill positive">Portfolio</span>
+    </div>
+    <form method="post" action="{{ url_for('investments_page') }}">
+      <input type="text" name="name" placeholder="Investment name" required />
+      <input type="text" name="type" placeholder="Type" required />
+      <input type="number" step="0.01" name="amount" placeholder="Amount" required />
+      <input type="number" step="0.01" name="return_rate" placeholder="Return %" required />
+      <input type="date" name="date" value="{{ today }}" required />
+      <button type="submit">Save investment</button>
+    </form>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <h3>Portfolio</h3>
+      <span class="pill positive">{{ investments|length }} assets</span>
+    </div>
+    <ul class="item-list">
+      {% for item in investments %}
+      <li>
+        <div>
+          <strong>{{ item.name }}</strong>
+          <span>{{ item.type }} • {{ item.date }}</span>
+        </div>
+        <div class="item-actions">
+          <b>{{ currency_symbol }}{{ "%.2f"|format(item.amount) }}</b>
+          <span class="gain">{{ item.return_rate }}%</span>
+          <form method="post" action="{{ url_for('delete_item', collection='investments', item_id=item.id) }}">
+            <button class="delete" type="submit">Delete</button>
+          </form>
+        </div>
+      </li>
+      {% else %}
+      <li class="empty">No investments yet.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endblock %}

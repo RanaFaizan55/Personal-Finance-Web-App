@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="section-header section-header-split">
+  <div>
+    <p class="eyebrow">Memory</p>
+    <h2>Notes</h2>
+  </div>
+  <div class="date-pill">{{ today }}</div>
+</section>
+
+<section class="single-column-form-layout">
+  <div class="panel form-panel">
+    <div class="panel-header">
+      <h3>Add note</h3>
+      <span class="pill neutral">Remember</span>
+    </div>
+    <form method="post" action="{{ url_for('notes_page') }}">
+      <textarea name="note_text" rows="5" placeholder="Write a reminder or personal note..."></textarea>
+      <button type="submit">Add note</button>
+    </form>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <h3>Saved notes</h3>
+      <span class="pill neutral">{{ notes|length }} items</span>
+    </div>
+    <ul class="note-list">
+      {% for note in notes %}
+      <li>
+        <span>{{ note.text }}</span>
+        <form method="post" action="{{ url_for('delete_item', collection='notes', item_id=note.id) }}">
+          <button class="delete" type="submit">x</button>
+        </form>
+      </li>
+      {% else %}
+      <li class="empty">No notes yet.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Life Hub | Register</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body class="auth-body">
+    <div class="auth-shell">
+      <div class="auth-card">
+        <div class="brand auth-brand">
+          <div class="brand-mark">L</div>
+          <div>
+            <p class="eyebrow">Personal</p>
+            <h1>Life Hub</h1>
+          </div>
+        </div>
+
+        <h2>Create account</h2>
+        <p class="auth-subtitle">Set up your personal life dashboard.</p>
+
+        {% if error %}
+        <div class="auth-error">{{ error }}</div>
+        {% endif %}
+
+        <form method="post" action="{{ url_for('register') }}" class="auth-form">
+          <label>
+            <span>Username</span>
+            <input type="text" name="username" placeholder="Choose a username" required />
+          </label>
+          <label>
+            <span>Password</span>
+            <input type="password" name="password" placeholder="Create a password" required />
+          </label>
+          <label>
+            <span>Confirm password</span>
+            <input type="password" name="confirm_password" placeholder="Repeat your password" required />
+          </label>
+          <button type="submit">Create account</button>
+        </form>
+
+        <p class="auth-switch">
+          Already have an account?
+          <a href="{{ url_for('login') }}">Login</a>
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,30 @@
+{
+  "expenses": [],
+  "investments": [],
+  "events": [
+    {
+      "id": 1,
+      "title": "Birthday Dinner",
+      "date": "2026-08-20",
+      "location": "Downtown",
+      "notes": "Dinner reservation at 8:00 PM."
+    },
+    {
+      "id": 2,
+      "title": "Annual Review",
+      "date": "2026-08-28",
+      "location": "Office",
+      "notes": "Prepare performance notes."
+    }
+  ],
+  "notes": [
+    {
+      "id": 1,
+      "text": "Set aside $500 for emergency fund this month."
+    },
+    {
+      "id": 2,
+      "text": "Review credit card subscriptions before the weekend."
+    }
+  ]
+}

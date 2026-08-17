@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="section-header">
+  <div>
+    <p class="eyebrow">Insights</p>
+    <h2>Analytics</h2>
+  </div>
+  <div class="date-pill">{{ today }}</div>
+</section>
+
+<section class="analytics-grid analytics-page-grid">
+  <div class="panel analytics-card">
+    <div class="panel-header">
+      <h3>Expense trend</h3>
+      <span class="pill neutral">6 months</span>
+    </div>
+    <div class="bar-chart">
+      {% for item in monthly_totals %}
+      <div class="bar-group">
+        <div class="bar-wrap">
+          <div class="bar" style="height: {{ ((item.total / 500) * 100) if item.total else 8 }}%;"></div>
+        </div>
+        <span>{{ item.label }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="panel analytics-card budget-card">
+    <div class="panel-header">
+      <h3>Budget progress</h3>
+      <span class="pill neutral">{{ budget_percentage }}%</span>
+    </div>
+    <div class="budget-ring-wrap">
+      <div class="budget-ring" style="--progress: {{ budget_percentage }};">
+        <div class="budget-inner">
+          <strong>{{ budget_percentage }}%</strong>
+          <span>used</span>
+        </div>
+      </div>
+    </div>
+    <p class="ring-label">Spent {{ currency_symbol }}{{ "%.2f"|format(summary['total_expenses']) }} of {{ currency_symbol }}{{ "%.2f"|format(summary['monthly_budget']) }}</p>
+  </div>
+
+  <div class="panel analytics-card full-width-panel">
+    <div class="panel-header">
+      <h3>Category breakdown</h3>
+      <span class="pill positive">Spend mix</span>
+    </div>
+    <div class="category-list">
+      {% for item in category_breakdown %}
+      <div class="category-row">
+        <div class="category-meta">
+          <span class="legend" style="background: {{ item.color }};"></span>
+          <span>{{ item.category }}</span>
+        </div>
+        <div class="category-values">
+          <strong>{{ currency_symbol }}{{ "%.2f"|format(item.amount) }}</strong>
+          <small>{{ item.percent }}%</small>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<header class="topbar">
+  <div>
+    <p class="eyebrow">Dashboard</p>
+    <h2>My life overview</h2>
+  </div>
+  <div class="topbar-actions">
+    <div class="date-pill">{{ today }}</div>
+    <button class="soft-button" type="button">Sync data</button>
+  </div>
+</header>
+
+<section class="hero-panel panel">
+  <div class="hero-copy">
+    <span class="status-badge">Healthy month</span>
+    <h3>You are staying on track.</h3>
+    <p>Your spending is below budget and your next event is coming up soon.</p>
+  </div>
+  <div class="hero-metrics">
+    <div>
+      <span>Cash in hand</span>
+      <strong>{{ currency_symbol }}{{ "%.2f"|format(summary['cash_in_hand']) }}</strong>
+    </div>
+    <div>
+      <span>Remaining</span>
+      <strong>{{ currency_symbol }}{{ "%.2f"|format(summary['remaining_budget']) }}</strong>
+    </div>
+    <div>
+      <span>Next event</span>
+      <strong>{% if summary['next_event'] %}{{ summary['next_event']['title'] }}{% else %}None{% endif %}</strong>
+    </div>
+  </div>
+</section>
+
+<form class="budget-editor panel" method="post" action="{{ url_for('update_budget') }}">
+  <div class="panel-header">
+    <h3>Budget control</h3>
+    <span class="pill neutral">Your cash</span>
+  </div>
+  <div class="budget-form-row">
+    <label>
+      <span>Cash in hand</span>
+      <input type="number" step="0.01" name="cash_on_hand" value="{{ summary['cash_in_hand'] }}" />
+    </label>
+    <label>
+      <span>Currency</span>
+      <select name="currency">
+        {% for code in ['USD','EUR','GBP','INR','PKR','AED','JPY','AUD','CAD'] %}
+        <option value="{{ code }}" {% if currency == code %}selected{% endif %}>{{ code }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <div class="budget-actions">
+      <button type="submit">Update</button>
+      <button type="submit" class="reset-button" formmethod="post" formaction="{{ url_for('reset_all') }}" onclick="return confirm('Reset all values to zero?')">Reset</button>
+    </div>
+  </div>
+</form>
+
+<section class="stats-grid">
+  <article class="stat-card highlight">
+    <div class="card-header">
+      <span>Total spending</span>
+      <i class="dot expense"></i>
+    </div>
+    <strong>{{ currency_symbol }}{{ "%.2f"|format(summary['total_expenses']) }}</strong>
+    <small>Monthly tracked</small>
+  </article>
+  <article class="stat-card">
+    <div class="card-header">
+      <span>Investments</span>
+      <i class="dot investment"></i>
+    </div>
+    <strong>{{ currency_symbol }}{{ "%.2f"|format(summary['total_investments']) }}</strong>
+    <small>Portfolio value</small>
+  </article>
+  <article class="stat-card">
+    <div class="card-header">
+      <span>Remaining cash</span>
+      <i class="dot budget"></i>
+    </div>
+    <strong>{{ currency_symbol }}{{ "%.2f"|format(summary['remaining_budget']) }}</strong>
+    <small>from {{ currency_symbol }}{{ "%.2f"|format(summary['cash_in_hand']) }}</small>
+  </article>
+  <article class="stat-card">
+    <div class="card-header">
+      <span>Upcoming events</span>
+      <i class="dot event"></i>
+    </div>
+    <strong>{{ summary['event_count'] }}</strong>
+    <small>{% if summary['next_event'] %}Next: {{ summary['next_event']['title'] }}{% else %}No events{% endif %}</small>
+  </article>
+</section>
+
+<section class="analytics-grid">
+  <div class="panel analytics-card">
+    <div class="panel-header">
+      <h3>Expense trend</h3>
+      <span class="pill neutral">6 months</span>
+    </div>
+    <div class="bar-chart">
+      {% for item in monthly_totals %}
+      <div class="bar-group">
+        <div class="bar-wrap">
+          <div class="bar" style="height: {{ ((item.total / 500) * 100) if item.total else 8 }}%;"></div>
+        </div>
+        <span>{{ item.label }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="panel analytics-card budget-card">
+    <div class="panel-header">
+      <h3>Budget progress</h3>
+      <span class="pill neutral">{{ budget_percentage }}%</span>
+    </div>
+    <div class="budget-ring-wrap">
+      <div class="budget-ring" style="--progress: {{ budget_percentage }};">
+        <div class="budget-inner">
+          <strong>{{ budget_percentage }}%</strong>
+          <span>used</span>
+        </div>
+      </div>
+    </div>
+    <p class="ring-label">Spent {{ currency_symbol }}{{ "%.2f"|format(summary['total_expenses']) }} of {{ currency_symbol }}{{ "%.2f"|format(summary['cash_in_hand']) }}</p>
+  </div>
+
+  <div class="panel analytics-card">
+    <div class="panel-header">
+      <h3>Category breakdown</h3>
+      <span class="pill positive">Spend mix</span>
+    </div>
+    <div class="category-list">
+      {% for item in category_breakdown %}
+      <div class="category-row">
+        <div class="category-meta">
+          <span class="legend" style="background: {{ item.color }};"></span>
+          <span>{{ item.category }}</span>
+        </div>
+        <div class="category-values">
+          <strong>${{ "%.2f"|format(item.amount) }}</strong>
+          <small>{{ item.percent }}%</small>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="calendar-panel panel">
+  <div class="panel-header">
+    <h3>{{ month_name }}</h3>
+    <div class="calendar-nav">
+      <a href="{{ url_for('dashboard', month=prev_month, year=prev_year) }}">←</a>
+      <a href="{{ url_for('dashboard', month=next_month, year=next_year) }}">→</a>
+    </div>
+  </div>
+
+  <div class="calendar-grid">
+    <div class="calendar-header-cell">Sun</div>
+    <div class="calendar-header-cell">Mon</div>
+    <div class="calendar-header-cell">Tue</div>
+    <div class="calendar-header-cell">Wed</div>
+    <div class="calendar-header-cell">Thu</div>
+    <div class="calendar-header-cell">Fri</div>
+    <div class="calendar-header-cell">Sat</div>
+
+    {% for week in calendar_weeks %}
+      {% for day in week %}
+        <div class="calendar-day {% if not day.is_current_month %}muted{% endif %} {% if day.is_today %}today{% endif %}">
+          <div class="day-number">{{ day.day }}</div>
+          {% if day.events %}
+            {% for event in day.events[:2] %}
+            <div class="calendar-tag event-tag">{{ event.title }}</div>
+            {% endfor %}
+          {% endif %}
+          {% if day.expenses %}
+            {% for expense in day.expenses[:2] %}
+            <div class="calendar-tag expense-tag">${{ "%.0f"|format(expense.amount) }}</div>
+            {% endfor %}
+          {% endif %}
+        </div>
+      {% endfor %}
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}
