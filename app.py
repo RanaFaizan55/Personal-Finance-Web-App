@@ -7,7 +7,7 @@ import socket
 import sqlite3
 import subprocess
 from calendar import monthrange
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from time import sleep
 
@@ -32,6 +32,10 @@ DATA_DIR, DB_PATH = resolve_data_paths()
 app = Flask(__name__)
 application = app
 app.secret_key = "life-hub-secret-key-change-me"
+app.config["SESSION_PERMANENT"] = True
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=30)
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
 CURRENCY_RATES = {
     "USD": 1.0,
@@ -484,11 +488,13 @@ def login():
     if request.method == "POST":
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "")
+        remember_me = request.form.get("remember_me") == "on"
         row = get_db().execute(
             "SELECT * FROM users WHERE username = ?",
             (username,),
         ).fetchone()
         if row and row["password_hash"] == hash_password(password):
+            session.permanent = remember_me
             session["user"] = username
             return redirect(url_for("dashboard"))
         return render_template("login.html", error="Invalid username or password.")
@@ -505,6 +511,7 @@ def register():
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "")
         confirm = request.form.get("confirm_password", "")
+        remember_me = request.form.get("remember_me") == "on"
 
         if not username or len(username) < 3:
             return render_template("register.html", error="Username must be at least 3 characters.")
@@ -525,6 +532,7 @@ def register():
             (username, hash_password(password)),
         )
         get_db().commit()
+        session.permanent = remember_me
         session["user"] = username
         return redirect(url_for("dashboard"))
 
@@ -534,7 +542,42 @@ def register():
 @app.route("/logout")
 def logout():
     session.pop("user", None)
+    session.clear()
     return redirect(url_for("login"))
+
+
+@app.route("/reset-password", methods=["GET", "POST"])
+def reset_password():
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        current_password = request.form.get("current_password", "")
+        new_password = request.form.get("new_password", "")
+        confirm_password = request.form.get("confirm_password", "")
+
+        if not username:
+            return render_template("reset_password.html", error="Username is required.")
+        if len(new_password) < 4:
+            return render_template("reset_password.html", error="New password must be at least 4 characters.")
+        if new_password != confirm_password:
+            return render_template("reset_password.html", error="New passwords do not match.")
+
+        row = get_db().execute(
+            "SELECT * FROM users WHERE username = ?",
+            (username,),
+        ).fetchone()
+        if not row or row["password_hash"] != hash_password(current_password):
+            return render_template("reset_password.html", error="Current username/password is incorrect.")
+
+        get_db().execute(
+            "UPDATE users SET password_hash = ? WHERE username = ?",
+            (hash_password(new_password), username),
+        )
+        get_db().commit()
+
+        session["user"] = username
+        return redirect(url_for("dashboard"))
+
+    return render_template("reset_password.html", error=None)
 
 
 @app.route("/budget/update", methods=["POST"])
